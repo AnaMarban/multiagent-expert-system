@@ -194,4 +194,5 @@ mejorar la seguridad, el control de productos y la experiencia de compra en tien
 - Si la batería es menor al 20%, se recomienda cargar el carrito.
 - Si el producto está registrado y el pago está completo, se permite operación normal.
 - Si no hay lectura RFID, se solicita nueva lectura del sensor.
+             oooo
 """)
