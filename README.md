@@ -1,78 +1,106 @@
-# Smart-Guard Expert
+# Smart-Guard Support Center
 
-## Sistema Experto Multiagente para Seguridad y Diagnóstico del Smart-Guard Cart
-
-Smart-Guard Expert es un prototipo local desarrollado en Python que simula el módulo inteligente de decisión de un carrito de compras inteligente.
-
-El sistema analiza eventos relacionados con productos detectados, estado de pago, zona del carrito y nivel de batería. A partir de esta información, aplica reglas de inferencia y genera una explicación de las decisiones tomadas.
+Sistema experto de soporte tecnico para supermercados que usan el carrito inteligente Smart-Guard Cart.
 
 ---
 
-## Objetivo
+## Que hace
 
-Desarrollar un sistema experto moderno basado en agentes inteligentes que permita analizar eventos del Smart-Guard Cart, detectar irregularidades, generar alertas y explicar el razonamiento utilizado.
-
----
-
-## Relación con Smart-Guard Cart
-
-Este proyecto se adapta al concepto del Smart-Guard Cart, un carrito inteligente diseñado para mejorar la seguridad y el control de productos en tiendas o supermercados.
-
-Smart-Guard Expert funciona como el módulo lógico del sistema, encargado de tomar decisiones como:
-
-- Detectar productos no registrados.
-- Verificar si el pago fue completado.
-- Identificar eventos sospechosos en la zona de salida.
-- Recomendar carga del carrito cuando la batería es baja.
-- Explicar las decisiones tomadas mediante reglas de inferencia.
+Recibe reportes de fallas en los carritos, los interpreta con 3 agentes, aplica reglas de diagnostico y genera un ticket con prioridad y explicacion. Todo funciona local, sin internet y sin API Key.
 
 ---
 
-## Agentes implementados
+## Como fue creciendo el proyecto
 
-### 1. Agente de Monitoreo del Carrito
+**28 mayo — Primer commit / README inicial**
+Empezo con la idea: un sistema de soporte para el Smart-Guard Cart.
+El README describe que va a ser y por que.
 
-Recibe y organiza los datos del evento:
+**29 mayo — Base de datos**
+Defini las tablas que iba a necesitar: clientes, carritos, tickets, diagnosticos, logs.
+Aprendi a usar SQLite porque no queria instalar MySQL para algo local.
+La funcion init_database() crea todo automaticamente si no existe.
 
-- ID del carrito.
-- Producto detectado por RFID.
-- Estado de registro del producto.
-- Estado del pago.
-- Zona actual del carrito.
-- Nivel de batería.
+**30 mayo — Agents**
+Cree los tres agentes. Cada uno en su propio archivo porque cada uno hace una cosa distinta.
+El Agente 1 lee el mensaje. El Agente 2 diagnostica. El Agente 3 explica.
 
-### 2. Agente de Inferencia y Seguridad
+**01 junio — Rules / Base de conocimiento**
+Defini las 15 reglas IF/THEN. Cada regla tiene condiciones, resultado, prioridad y recomendacion.
+Estuve investigando que fallas son comunes en sistemas RFID y Raspberry Pi para que las reglas tuvieran sentido real.
 
-Aplica reglas de inferencia para determinar si existe una irregularidad o si el carrito puede continuar operando normalmente.
+**04 junio — Main / Interfaz inicial**
+Primera version del dashboard en Streamlit. Sin CSS todavia, solo la estructura.
+Descubri que Streamlit ejecuta el archivo completo cada vez que el usuario hace algo, lo cual cambio como organice el codigo.
 
-### 3. Agente Supervisor / Explicador
+**09 junio — Actualizacion main**
+Mejore el diseno visual con CSS inyectado, agregue los casos de prueba como botones,
+y conecte los 3 agentes para que se muestren en orden con colores distintos.
 
-Genera una explicación clara del razonamiento utilizado por el sistema. Este agente permite cumplir con el requisito de explicabilidad.
+**13 junio — Interfaz y motor de inferencia**
+Renombre archivos para que tengan mas sentido (interfaz.py, motor_inferencia.py, base_conocimiento.py).
+Complete el motor de inferencia: calcula confianza para cada regla, las ordena y selecciona la mejor.
+Agregue la inferencia encadenada: si el carrito tiene tickets previos, la prioridad sube automaticamente.
+
+**14 junio — Documentacion final**
+Manual de usuario, bitacora de desarrollo y explicacion del codigo por secciones.
 
 ---
 
-## Reglas de inferencia iniciales
+## Tecnologias
 
-```txt
-R1:
-IF producto_detectado = verdadero
-AND producto_registrado = falso
-THEN generar_alerta_producto_no_registrado
+- Python 3.10+
+- Streamlit (interfaz web local)
+- SQLite (base de datos sin servidor)
+- Pandas (tablas en la UI)
+- Motor de reglas propio sin dependencias externas
 
-R2:
-IF zona = salida
-AND pago_completado = falso
-THEN bloquear_carrito_temporalmente
+---
 
-R3:
-IF bateria < 20
-THEN recomendar_estacion_de_carga
+## Estructura
 
-R4:
-IF producto_registrado = verdadero
-AND pago_completado = verdadero
-THEN permitir_operacion_normal
+```
+SmartGuard_SupportCenter/
+  interfaz.py          <- dashboard principal
+  database.py          <- gestion de SQLite
+  config.py            <- constantes globales
+  agents/
+    customer_agent.py  <- Agente 1: interpreta el mensaje
+    diagnostic_agent.py <- Agente 2: diagnostica y crea ticket
+    supervisor_agent.py <- Agente 3: explica la decision
+  base/
+    base_conocimiento.py <- 15 reglas IF/THEN
+    support_knowledge.py <- info del Smart-Guard Cart
+  services/
+    motor_inferencia.py  <- evalua las reglas
+    ticket_service.py    <- crea y guarda tickets
+    report_service.py    <- metricas y estadisticas
+  data/
+    smartguard_support.db (se crea automaticamente)
+  docs/
+    bitacora_desarrollo.md
+    manual_usuario.md
+    explicacion_codigo.md
+```
 
-R5:
-IF producto_detectado = falso
-THEN solicitar_nueva_lectura_RFID
+---
+
+## Instalacion y uso
+
+```
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+streamlit run interfaz.py
+```
+
+Abre el navegador en http://localhost:8501
+
+---
+
+## Casos de prueba incluidos
+
+10 casos listos en la interfaz. Los mas utiles para demostrar:
+- Caso 1: falla RFID basica
+- Caso 2: bateria baja en la bahia (distingue de bateria baja fuera de bahia)
+- Caso 10: tres carritos con falla al mismo tiempo (prioridad critica)
